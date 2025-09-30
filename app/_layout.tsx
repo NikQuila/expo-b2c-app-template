@@ -14,6 +14,16 @@ import { autoUpdateOnStart } from '@/lib/updates';
 
 import { lightTheme, darkTheme, useColorScheme } from '@/lib/react-native-paper';
 
+// Importaciones condicionales para Google Sign-In
+const isDevelopment = process.env.NODE_ENV === 'development';
+let GoogleSignin: any;
+
+if (!isDevelopment) {
+  // Solo importar en producción
+  const GoogleSignInPackage = require('@react-native-google-signin/google-signin');
+  GoogleSignin = GoogleSignInPackage.GoogleSignin;
+}
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -65,18 +75,27 @@ function RootLayoutNav() {
     autoUpdateOnStart();
   }, []);
 
+  // Configure Google Sign-In
+  useEffect(() => {
+    if (GoogleSignin) {
+      // TODO: Replace with your actual Google Cloud Client IDs
+      // Get these from: https://console.cloud.google.com/apis/credentials
+      GoogleSignin.configure({
+        webClientId: 'YOUR-WEB-CLIENT-ID.apps.googleusercontent.com', // REPLACE THIS with your Web Client ID
+        iosClientId: 'YOUR-IOS-CLIENT-ID.apps.googleusercontent.com', // REPLACE THIS with your iOS Client ID (optional, for iOS)
+        offlineAccess: true,
+      });
+    }
+  }, []);
+
   return (
     <PaperProvider theme={paperTheme}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <SheetProvider>
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="welcome" options={{ headerShown: false }} />
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="register" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding-step1" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding-step2" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding-step3" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
           </Stack>

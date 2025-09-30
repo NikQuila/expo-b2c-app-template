@@ -11,7 +11,7 @@ export default function OnboardingStep2Screen() {
 
   const handleNext = () => {
     // TODO: Save to store
-    router.push('/onboarding-step3');
+    router.push('/(onboarding)/step3');
   };
 
   const genderOptions = [

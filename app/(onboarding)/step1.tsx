@@ -9,8 +9,9 @@ import { useStore } from '@/store';
 
 export default function OnboardingStep1Screen() {
   const { user, updateUser } = useStore();
-  const [name, setName] = useState('');
-  const [lastName, setLastName] = useState('');
+  // Pre-fill name and last name if they exist from OAuth
+  const [name, setName] = useState(user?.name || '');
+  const [lastName, setLastName] = useState(user?.last_name || '');
   const [birthdate, setBirthdate] = useState<Date | undefined>(undefined);
 
   const handleNext = () => {
@@ -22,7 +23,7 @@ export default function OnboardingStep1Screen() {
         birth_date: birthdate?.toISOString(),
       });
     }
-    router.push('/onboarding-step2');
+    router.push('/(onboarding)/step2');
   };
 
   const openDatePicker = async () => {

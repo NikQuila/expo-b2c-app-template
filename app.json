@@ -17,9 +17,12 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIBackgroundModes": [
+          "remote-notification",
           "remote-notification"
-        ]
-      }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.nikquila.templateb2c"
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +34,8 @@
       "permissions": [
         "POST_NOTIFICATIONS"
       ],
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "package": "com.nikquila.templateb2c"
     },
     "notification": {
       "icon": "./assets/images/notification-icon.png",

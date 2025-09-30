@@ -17,7 +17,7 @@ export default function OnboardingStep3Screen() {
   const handleComplete = async () => {
     if (!user) {
       Alert.alert('Error', 'User not found. Please log in again.');
-      router.replace('/login');
+      router.replace('/(auth)/login');
       return;
     }
 

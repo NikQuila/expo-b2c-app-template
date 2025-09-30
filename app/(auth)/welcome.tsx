@@ -30,14 +30,14 @@ export default function WelcomeScreen() {
         >
           <Button
             mode="contained"
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/(auth)/login')}
             style={styles.button}
           >
             Log In
           </Button>
           <Button
             mode="outlined"
-            onPress={() => router.push('/register')}
+            onPress={() => router.push('/(auth)/register')}
             style={styles.button}
           >
             Create Account

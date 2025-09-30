@@ -49,7 +49,7 @@ export function useAuth() {
         await saveUser(userResult.data);
 
         // 4. Navigate to onboarding
-        router.replace('/onboarding-step1');
+        router.replace('/(onboarding)/step1');
       }
 
       return { success: true };
@@ -107,7 +107,7 @@ export function useAuth() {
         if (userResult.data.onboarding_completed) {
           router.replace('/(tabs)');
         } else {
-          router.replace('/onboarding-step1');
+          router.replace('/(onboarding)/step1');
         }
       }
 
@@ -137,7 +137,7 @@ export function useAuth() {
       await clearAuthStorage();
 
       // 3. Navigate to welcome
-      router.replace('/welcome');
+      router.replace('/(auth)/welcome');
 
       return { success: true };
     } catch (err: any) {

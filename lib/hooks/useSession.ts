@@ -24,7 +24,7 @@ export function useSession() {
         // No session, redirect to welcome
         setIsAuthenticated(false);
         setUser(null);
-        return { authenticated: false, redirectTo: '/welcome' };
+        return { authenticated: false, redirectTo: '/(auth)/welcome' };
       }
 
       // 2. Always fetch fresh user data from DB
@@ -33,7 +33,7 @@ export function useSession() {
       if (userResult.error || !userResult.data) {
         setIsAuthenticated(false);
         setUser(null);
-        return { authenticated: false, redirectTo: '/welcome' };
+        return { authenticated: false, redirectTo: '/(auth)/welcome' };
       }
 
       const dbUser = userResult.data;
@@ -47,7 +47,7 @@ export function useSession() {
 
       // 5. Determine redirect based on onboarding status
       if (!dbUser.onboarding_completed) {
-        return { authenticated: true, redirectTo: '/onboarding-step1' };
+        return { authenticated: true, redirectTo: '/(onboarding)/step1' };
       }
 
       return { authenticated: true, redirectTo: '/(tabs)' };
@@ -55,7 +55,7 @@ export function useSession() {
       console.error('Session check error:', error);
       setIsAuthenticated(false);
       setUser(null);
-      return { authenticated: false, redirectTo: '/welcome' };
+      return { authenticated: false, redirectTo: '/(auth)/welcome' };
     } finally {
       setIsLoading(false);
     }

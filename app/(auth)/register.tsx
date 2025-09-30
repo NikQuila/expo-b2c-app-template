@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, TextInput, HelperText } from 'react-native-paper';
 import { router } from 'expo-router';
@@ -6,17 +6,22 @@ import { useState } from 'react';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useOAuthAuth } from '@/lib/hooks/useOAuthAuth';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const { t } = useTranslation();
-  const { login, isLoading, error, setError } = useAuth();
+  const { register, isLoading, error, setError } = useAuth();
+  const { handleGoogleSignIn, handleAppleSignIn, isLoading: oAuthLoading } = useOAuthAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
+    confirmPassword?: string;
   }>({});
 
   const validateEmail = (email: string) => {
@@ -35,32 +40,40 @@ export default function LoginScreen() {
 
     if (!password) {
       newErrors.password = t('auth.errors.requiredField');
+    } else if (password.length < 8) {
+      newErrors.password = t('auth.errors.weakPassword');
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = t('auth.errors.requiredField');
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = t('auth.errors.passwordMismatch');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     if (!validateForm()) return;
 
     setError(null);
-    const result = await login(email, password);
+    const result = await register(email, password);
 
     if (!result.success && result.error) {
       // Map Supabase errors to translated messages
       let errorMessage = result.error;
 
-      if (result.error.includes('Invalid login credentials') || result.error.includes('Invalid email or password')) {
-        errorMessage = t('auth.errors.invalidCredentials');
-      } else if (result.error.includes('Email not confirmed')) {
-        errorMessage = t('auth.errors.emailNotConfirmed');
+      if (result.error.includes('already registered') || result.error.includes('already exists')) {
+        errorMessage = t('auth.errors.userExists');
       } else if (result.error.includes('Invalid email')) {
         errorMessage = t('auth.errors.invalidEmail');
+      } else if (result.error.includes('Password')) {
+        errorMessage = t('auth.errors.weakPassword');
       } else if (result.error.includes('Network')) {
         errorMessage = t('auth.errors.networkError');
       } else {
-        errorMessage = t('auth.errors.loginFailed');
+        errorMessage = t('auth.errors.registrationFailed');
       }
 
       Alert.alert('Error', errorMessage);
@@ -78,10 +91,10 @@ export default function LoginScreen() {
             style={styles.header}
           >
             <Text variant="headlineLarge" style={styles.title}>
-              {t('auth.login.title')}
+              {t('auth.register.title')}
             </Text>
             <Text variant="bodyLarge" style={styles.subtitle}>
-              {t('auth.login.subtitle')}
+              {t('auth.register.subtitle')}
             </Text>
           </MotiView>
 
@@ -93,8 +106,8 @@ export default function LoginScreen() {
           >
             <View>
               <TextInput
-                label={t('auth.login.emailLabel')}
-                placeholder={t('auth.login.emailPlaceholder')}
+                label={t('auth.register.emailLabel')}
+                placeholder={t('auth.register.emailPlaceholder')}
                 value={email}
                 onChangeText={(text) => {
                   setEmail(text);
@@ -115,8 +128,8 @@ export default function LoginScreen() {
 
             <View>
               <TextInput
-                label={t('auth.login.passwordLabel')}
-                placeholder={t('auth.login.passwordPlaceholder')}
+                label={t('auth.register.passwordLabel')}
+                placeholder={t('auth.register.passwordPlaceholder')}
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
@@ -140,18 +153,41 @@ export default function LoginScreen() {
               )}
             </View>
 
-            <Button mode="text" onPress={() => {}} style={styles.forgotButton}>
-              {t('auth.login.forgotPassword')}
-            </Button>
+            <View>
+              <TextInput
+                label={t('auth.register.confirmPasswordLabel')}
+                placeholder={t('auth.register.confirmPasswordPlaceholder')}
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
+                }}
+                mode="outlined"
+                secureTextEntry={!showConfirmPassword}
+                right={
+                  <TextInput.Icon
+                    icon={showConfirmPassword ? 'eye-off' : 'eye'}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  />
+                }
+                style={styles.input}
+                error={!!errors.confirmPassword}
+              />
+              {errors.confirmPassword && (
+                <HelperText type="error" visible={!!errors.confirmPassword}>
+                  {errors.confirmPassword}
+                </HelperText>
+              )}
+            </View>
 
             <Button
               mode="contained"
-              onPress={handleLogin}
+              onPress={handleRegister}
               loading={isLoading}
               disabled={isLoading}
               style={styles.button}
             >
-              {t('auth.login.loginButton')}
+              {t('auth.register.registerButton')}
             </Button>
 
             <View style={styles.divider}>
@@ -165,30 +201,36 @@ export default function LoginScreen() {
             <Button
               mode="outlined"
               icon="google"
-              onPress={() => {}}
+              onPress={handleGoogleSignIn}
+              disabled={isLoading || oAuthLoading}
+              loading={oAuthLoading}
               style={styles.socialButton}
             >
               Continue with Google
             </Button>
 
-            <Button
-              mode="outlined"
-              icon="apple"
-              onPress={() => {}}
-              style={styles.socialButton}
-            >
-              Continue with Apple
-            </Button>
+            {Platform.OS === 'ios' && (
+              <Button
+                mode="outlined"
+                icon="apple"
+                onPress={handleAppleSignIn}
+                disabled={isLoading || oAuthLoading}
+                loading={oAuthLoading}
+                style={styles.socialButton}
+              >
+                Continue with Apple
+              </Button>
+            )}
 
             <View style={styles.footer}>
-              <Text variant="bodyMedium">{t('auth.login.noAccount')} </Text>
+              <Text variant="bodyMedium">{t('auth.register.haveAccount')} </Text>
               <Button
                 mode="text"
-                onPress={() => router.push('/register')}
+                onPress={() => router.push('/(auth)/login')}
                 compact
                 style={styles.linkButton}
               >
-                {t('auth.login.signUp')}
+                {t('auth.register.signIn')}
               </Button>
             </View>
           </MotiView>
@@ -229,10 +271,6 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: 'transparent',
   },
-  forgotButton: {
-    alignSelf: 'flex-end',
-    marginTop: -8,
-  },
   button: {
     paddingVertical: 8,
     marginTop: 8,
@@ -262,5 +300,8 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     paddingVertical: 8,
+  },
+  iconButton: {
+    backgroundColor: 'transparent',
   },
 });

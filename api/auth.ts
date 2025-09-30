@@ -148,3 +148,81 @@ export function onAuthStateChange(
     }
   });
 }
+
+/**
+ * Sign in with Google using OAuth
+ */
+export async function signInWithGoogle(
+  idToken: string,
+  nonce?: string
+): Promise<ApiResponse<AuthSession>> {
+  try {
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken,
+      nonce,
+    });
+
+    if (error) throw error;
+
+    if (!data.session) {
+      return {
+        error: 'Google sign in failed. Please try again.',
+      };
+    }
+
+    return {
+      data: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        user: {
+          id: data.user.id,
+          email: data.user.email!,
+        },
+      },
+    };
+  } catch (error: any) {
+    return {
+      error: error.message || 'Failed to sign in with Google',
+    };
+  }
+}
+
+/**
+ * Sign in with Apple using OAuth
+ */
+export async function signInWithApple(
+  idToken: string,
+  nonce?: string
+): Promise<ApiResponse<AuthSession>> {
+  try {
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: idToken,
+      nonce,
+    });
+
+    if (error) throw error;
+
+    if (!data.session) {
+      return {
+        error: 'Apple sign in failed. Please try again.',
+      };
+    }
+
+    return {
+      data: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        user: {
+          id: data.user.id,
+          email: data.user.email!,
+        },
+      },
+    };
+  } catch (error: any) {
+    return {
+      error: error.message || 'Failed to sign in with Apple',
+    };
+  }
+}

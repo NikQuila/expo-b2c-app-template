@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "996860883253",
+    "project_id": "template-b2c",
+    "storage_bucket": "template-b2c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996860883253:android:45e8c17d681b4948155c7c",
+        "android_client_info": {
+          "package_name": "com.nikquila.templateb2c"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCc4_y6hs8u1F7VX73fkrgQ2o12QppqDG4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
