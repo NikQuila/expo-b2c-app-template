@@ -1,12 +1,13 @@
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Button, Card } from 'react-native-paper';
+import { Text, Button, Card, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { MotiView } from 'moti';
 
 export default function OnboardingStep2Screen() {
   const [gender, setGender] = useState<string | null>(null);
+  const theme = useTheme();
 
   const handleNext = () => {
     // TODO: Save to store
@@ -21,7 +22,7 @@ export default function OnboardingStep2Screen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.content}>
         <MotiView
           from={{ opacity: 0, translateY: -20 }}
@@ -49,7 +50,10 @@ export default function OnboardingStep2Screen() {
                 mode="outlined"
                 style={[
                   styles.optionCard,
-                  gender === option.value && styles.selectedCard,
+                  gender === option.value && {
+                    borderColor: theme.colors.primary,
+                    backgroundColor: theme.colors.primary,
+                  },
                 ]}
                 onPress={() => setGender(option.value)}
               >
@@ -58,7 +62,9 @@ export default function OnboardingStep2Screen() {
                     variant="titleMedium"
                     style={[
                       styles.optionLabel,
-                      gender === option.value && styles.selectedLabel,
+                      gender === option.value && {
+                        color: theme.colors.onPrimary,
+                      },
                     ]}
                   >
                     {option.label}
@@ -124,19 +130,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  selectedCard: {
-    borderColor: '#000000',
-    backgroundColor: '#000000',
-  },
   optionContent: {
     paddingVertical: 12,
   },
   optionLabel: {
     textAlign: 'center',
     fontWeight: '500',
-  },
-  selectedLabel: {
-    color: '#FFFFFF',
   },
   actions: {
     paddingBottom: 20,

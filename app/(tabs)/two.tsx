@@ -1,21 +1,139 @@
-import { StyleSheet, View, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, List, Switch, Card, Avatar, Divider, Button } from 'react-native-paper';
+import { Text, List, Switch, Card, Avatar, Divider, Button, ActivityIndicator, useTheme } from 'react-native-paper';
 import { MotiView } from 'moti';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import LanguageToggle from '@/components/ui/language-toggle';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useStore } from '@/store';
+import {
+  registerForPushNotifications,
+  unregisterFromPushNotifications,
+  getNotificationPermissionStatus,
+} from '@/lib/notifications';
+import { toggleNotifications as apiToggleNotifications } from '@/api/notifications';
+import { checkForUpdates, downloadAndApplyUpdate, getCurrentUpdateInfo } from '@/lib/updates';
+import * as StoreReview from 'expo-store-review';
 
 export default function SettingsScreen() {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState(getCurrentUpdateInfo());
   const { t } = useTranslation();
   const { logout, isLoading } = useAuth();
-  const { user } = useStore();
+  const { user, updateUser, themeMode, setThemeMode } = useStore();
+  const theme = useTheme();
+
+  const notificationsEnabled = user?.notifications_enabled ?? true;
+
+  // Check notification permission status on mount
+  useEffect(() => {
+    checkNotificationStatus();
+  }, []);
+
+  const checkNotificationStatus = async () => {
+    const status = await getNotificationPermissionStatus();
+    console.log('Notification permission status:', status);
+  };
+
+  const handleCheckForUpdates = async () => {
+    setUpdateLoading(true);
+    try {
+      const result = await checkForUpdates();
+
+      if (result.isUpdateAvailable) {
+        Alert.alert(
+          'Update Available',
+          'A new version is available. Downloading...',
+          [{ text: 'OK' }]
+        );
+
+        const downloadResult = await downloadAndApplyUpdate();
+
+        if (downloadResult.success && downloadResult.needsReload) {
+          // App will reload automatically
+        } else if (!downloadResult.success) {
+          Alert.alert('Error', downloadResult.error || 'Failed to download update');
+        }
+      } else {
+        Alert.alert('Up to Date', 'You are already on the latest version!');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to check for updates');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleRateApp = async () => {
+    try {
+      const isAvailable = await StoreReview.isAvailableAsync();
+
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      } else {
+        // Fallback: open store page
+        const storeUrl = Platform.select({
+          ios: 'https://apps.apple.com/app/idYOUR_APP_ID',
+          android: 'https://play.google.com/store/apps/details?id=YOUR_PACKAGE_NAME',
+        });
+
+        Alert.alert(
+          t('settings.rateUs'),
+          'Would you like to rate us on the store?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Rate Now',
+              onPress: () => {
+                if (storeUrl) {
+                  // You would use Linking.openURL(storeUrl) here
+                  console.log('Open store:', storeUrl);
+                }
+              },
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error requesting review:', error);
+    }
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    if (!user) return;
+
+    setNotificationsLoading(true);
+    try {
+      if (value) {
+        // Enable notifications - register for push
+        const result = await registerForPushNotifications(user);
+        if (result.success) {
+          updateUser({ notifications_enabled: true, expo_push_token: result.token });
+          Alert.alert('Success', 'Notifications enabled successfully!');
+        } else {
+          Alert.alert('Error', result.error || 'Failed to enable notifications');
+        }
+      } else {
+        // Disable notifications - unregister
+        const result = await unregisterFromPushNotifications(user);
+        if (result.success) {
+          updateUser({ notifications_enabled: false, expo_push_token: undefined });
+          Alert.alert('Success', 'Notifications disabled successfully!');
+        } else {
+          Alert.alert('Error', result.error || 'Failed to disable notifications');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling notifications:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -39,7 +157,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
         {/* Profile Section */}
@@ -98,21 +216,33 @@ export default function SettingsScreen() {
                 right={() => (
                   <Switch
                     value={notificationsEnabled}
-                    onValueChange={setNotificationsEnabled}
+                    onValueChange={handleToggleNotifications}
+                    disabled={notificationsLoading}
                   />
                 )}
               />
               <Divider />
               <List.Item
                 title={t('settings.darkMode')}
-                description={t('settings.darkModeDesc')}
+                description={
+                  themeMode === 'system'
+                    ? 'Using system preference'
+                    : themeMode === 'dark'
+                    ? 'Dark mode enabled'
+                    : 'Light mode enabled'
+                }
                 left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
-                right={() => (
-                  <Switch
-                    value={darkModeEnabled}
-                    onValueChange={setDarkModeEnabled}
-                  />
-                )}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => {
+                  // Cycle through: system -> light -> dark -> system
+                  if (themeMode === 'system') {
+                    setThemeMode('light');
+                  } else if (themeMode === 'light') {
+                    setThemeMode('dark');
+                  } else {
+                    setThemeMode('system');
+                  }
+                }}
               />
               <Divider />
               <List.Item
@@ -210,8 +340,23 @@ export default function SettingsScreen() {
             <Card style={styles.settingsCard} mode="outlined">
               <List.Item
                 title={t('settings.version')}
-                description="1.0.0"
+                description={`1.0.0 ${!updateInfo.isEmbeddedLaunch ? `(${updateInfo.channel})` : '(Embedded)'}`}
                 left={(props) => <List.Icon {...props} icon="information-outline" />}
+              />
+              <Divider />
+              <List.Item
+                title="Check for Updates"
+                description="Check if a new version is available"
+                left={(props) => <List.Icon {...props} icon="download-outline" />}
+                right={() =>
+                  updateLoading ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <List.Icon icon="chevron-right" />
+                  )
+                }
+                onPress={handleCheckForUpdates}
+                disabled={updateLoading}
               />
               <Divider />
               <List.Item
@@ -219,6 +364,7 @@ export default function SettingsScreen() {
                 description={t('settings.rateUsDesc')}
                 left={(props) => <List.Icon {...props} icon="star-outline" />}
                 right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={handleRateApp}
               />
               <Divider />
               <List.Item

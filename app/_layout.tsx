@@ -9,6 +9,8 @@ import { PaperProvider } from 'react-native-paper';
 import { SheetProvider } from 'react-native-actions-sheet';
 import '@/lib/sheets';
 import '@/lib/i18n';
+import { setupNotificationListeners } from '@/lib/notifications';
+import { autoUpdateOnStart } from '@/lib/updates';
 
 import { lightTheme, darkTheme, useColorScheme } from '@/lib/react-native-paper';
 
@@ -51,6 +53,17 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const paperTheme = colorScheme === 'dark' ? darkTheme : lightTheme;
+
+  // Setup notification listeners on mount
+  useEffect(() => {
+    const cleanup = setupNotificationListeners();
+    return cleanup;
+  }, []);
+
+  // Check for updates on mount (runs automatically and silently)
+  useEffect(() => {
+    autoUpdateOnStart();
+  }, []);
 
   return (
     <PaperProvider theme={paperTheme}>

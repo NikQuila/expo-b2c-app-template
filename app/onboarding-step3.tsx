@@ -1,16 +1,18 @@
 import { StyleSheet, View, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Button, Card, Chip } from 'react-native-paper';
+import { Text, Button, Card, Chip, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { MotiView } from 'moti';
 import { useStore } from '@/store';
 import { updateUser as updateUserDB } from '@/api/users';
+import { registerForPushNotifications } from '@/lib/notifications';
 
 export default function OnboardingStep3Screen() {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user, updateUser } = useStore();
+  const theme = useTheme();
 
   const handleComplete = async () => {
     if (!user) {
@@ -37,6 +39,11 @@ export default function OnboardingStep3Screen() {
 
       // Update user in store with fresh data from DB
       updateUser(result.data);
+
+      // Register for push notifications (async, don't wait)
+      registerForPushNotifications(result.data).catch((err) => {
+        console.error('Failed to register for push notifications:', err);
+      });
 
       // Navigate to app
       router.replace('/(tabs)');
@@ -66,7 +73,7 @@ export default function OnboardingStep3Screen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.content}>
         <MotiView
           from={{ opacity: 0, translateY: -20 }}
@@ -95,7 +102,10 @@ export default function OnboardingStep3Screen() {
                   mode="outlined"
                   style={[
                     styles.optionCard,
-                    selectedGoals.includes(goal.value) && styles.selectedCard,
+                    selectedGoals.includes(goal.value) && {
+                      borderColor: theme.colors.primary,
+                      backgroundColor: theme.colors.primary,
+                    },
                   ]}
                   onPress={() => toggleGoal(goal.value)}
                 >
@@ -104,7 +114,9 @@ export default function OnboardingStep3Screen() {
                       variant="titleMedium"
                       style={[
                         styles.optionLabel,
-                        selectedGoals.includes(goal.value) && styles.selectedLabel,
+                        selectedGoals.includes(goal.value) && {
+                          color: theme.colors.onPrimary,
+                        },
                       ]}
                     >
                       {goal.label}
@@ -113,8 +125,8 @@ export default function OnboardingStep3Screen() {
                       <Chip
                         mode="flat"
                         compact
-                        style={styles.selectedChip}
-                        textStyle={styles.selectedChipText}
+                        style={{ backgroundColor: theme.colors.primary }}
+                        textStyle={{ color: theme.colors.onPrimary, fontSize: 12 }}
                       >
                         Selected
                       </Chip>
@@ -184,10 +196,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  selectedCard: {
-    borderColor: '#000000',
-    backgroundColor: '#000000',
-  },
   optionContent: {
     paddingVertical: 12,
     flexDirection: 'row',
@@ -196,16 +204,6 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     fontWeight: '500',
-  },
-  selectedLabel: {
-    color: '#FFFFFF',
-  },
-  selectedChip: {
-    backgroundColor: '#000000',
-  },
-  selectedChipText: {
-    color: '#FFFFFF',
-    fontSize: 12,
   },
   actions: {
     paddingTop: 20,

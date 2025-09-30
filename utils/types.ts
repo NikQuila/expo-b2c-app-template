@@ -7,6 +7,8 @@ export interface User {
   last_name?: string;
   onboarding_completed?: boolean;
   birth_date?: string;
+  expo_push_token?: string;
+  notifications_enabled?: boolean;
 }
 
 export interface ApiResponse<T> {

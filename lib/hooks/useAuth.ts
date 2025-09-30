@@ -4,6 +4,7 @@ import { signUp as apiSignUp, signIn as apiSignIn, signOut as apiSignOut } from 
 import { createUser, getUserByAuthId } from '@/api/users';
 import { useStore } from '@/store';
 import { saveUser, clearAuthStorage } from '@/lib/storage/auth-storage';
+import { registerForPushNotifications } from '@/lib/notifications';
 
 export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +96,14 @@ export function useAuth() {
         setUser(userResult.data);
         await saveUser(userResult.data);
 
-        // 4. Navigate based on onboarding status
+        // 4. Register for push notifications (async, don't wait)
+        if (userResult.data.onboarding_completed) {
+          registerForPushNotifications(userResult.data).catch((err) => {
+            console.error('Failed to register for push notifications:', err);
+          });
+        }
+
+        // 5. Navigate based on onboarding status
         if (userResult.data.onboarding_completed) {
           router.replace('/(tabs)');
         } else {

@@ -1,6 +1,6 @@
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Card, Button, Chip, ProgressBar, Avatar } from 'react-native-paper';
+import { Text, Card, Button, Chip, ProgressBar, Avatar, useTheme } from 'react-native-paper';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store';
@@ -8,6 +8,7 @@ import { useStore } from '@/store';
 export default function HomeScreen() {
   const { user } = useStore();
   const { t } = useTranslation();
+  const theme = useTheme();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -24,7 +25,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
         {/* Header */}
