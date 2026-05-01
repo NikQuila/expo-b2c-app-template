@@ -22,16 +22,11 @@ Notifications.setNotificationHandler({
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
   try {
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+    const existing = await Notifications.getPermissionsAsync();
+    if (existing.granted) return true;
 
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    return finalStatus === 'granted';
+    const requested = await Notifications.requestPermissionsAsync();
+    return requested.granted;
   } catch (error) {
     console.error('Error requesting notification permissions:', error);
     return false;
@@ -154,7 +149,7 @@ export function setupNotificationListeners() {
       console.log('Notification tapped, data:', data);
 
       // Navigate to the specified route
-      if (data.route) {
+      if (data?.route) {
         router.push(data.route as any);
       }
     });
@@ -170,6 +165,10 @@ export function setupNotificationListeners() {
  * Check current notification permission status
  */
 export async function getNotificationPermissionStatus(): Promise<string> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return status;
+  const permission = await Notifications.getPermissionsAsync();
+  return permission.granted
+    ? 'granted'
+    : permission.canAskAgain
+    ? 'undetermined'
+    : 'denied';
 }

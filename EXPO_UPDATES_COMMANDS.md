@@ -1,64 +1,62 @@
-# Expo Updates - Comandos Listos
+# Expo Updates - Comandos Listos (SDK 55)
+
+> ⚠️ **SDK 55**: `eas update` ahora requiere el flag `--environment`.
+> Valores: `development` | `preview` | `production`.
+
+## ⚙️ Cómo funciona
+
+El proyecto está configurado con `updates.checkAutomatically: "ON_LOAD"` en `app.json`.
+Eso significa que **expo-updates revisa, descarga y aplica updates solo** cada vez que se abre la app — no necesitas código adicional.
+
+Solo publicas el update con `eas update ...` y los usuarios lo reciben en el siguiente launch.
 
 ## 🚀 Setup Inicial (una sola vez)
 
 ```bash
-# 1. Login en EAS (si no lo has hecho)
+# 1. Login en EAS
 eas login
 
-# 2. Configurar el proyecto (si no está configurado)
-eas build:configure
+# 2. Configurar el proyecto (ya hecho en este repo)
+eas update:configure
 ```
 
 ## 📦 Publicar Updates
 
 ### Development (testing)
 ```bash
-# Publicar update al canal development
-eas update --branch development --message "Testing new features"
-
-# Con changelog más detallado
-eas update --branch development --message "Fixed login bug, improved performance"
+eas update --branch development --environment development --message "Testing new features"
 ```
 
 ### Preview (pre-production)
 ```bash
-# Publicar update al canal preview
-eas update --branch preview --message "Ready for QA testing"
+eas update --branch preview --environment preview --message "Ready for QA testing"
 ```
 
 ### Production (usuarios finales)
 ```bash
-# Publicar update al canal production
-eas update --branch production --message "Bug fixes and improvements"
-
-# Con mensaje más descriptivo
-eas update --branch production --message "v1.0.1: Fixed notifications, improved UX"
+eas update --branch production --environment production --message "Bug fixes and improvements"
 ```
 
 ## 🔍 Ver Updates Publicados
 
 ```bash
-# Ver todos los updates
+# Todos los updates
 eas update:list
 
-# Ver updates de un branch específico
-eas update:list --branch production
-
-# Ver con más detalle
+# Por branch
 eas update:list --branch production --limit 10
 ```
 
-## ↩️ Rollback (volver a versión anterior)
+## ↩️ Rollback
 
 ```bash
-# Ver updates para saber a cuál hacer rollback
+# Listar updates para identificar al cual hacer rollback
 eas update:list --branch production
 
-# Hacer rollback
+# Rollback al update anterior
 eas update:rollback --branch production
 
-# Hacer rollback a un update específico
+# Rollback a un update específico
 eas update:rollback --branch production --group <update-group-id>
 ```
 
@@ -66,79 +64,61 @@ eas update:rollback --branch production --group <update-group-id>
 
 Solo necesitas hacer build cuando:
 - Cambias dependencias nativas
-- Cambias configuración en app.json/app.config.js
-- Cambias assets nativos
+- Cambias configuración en `app.json` que afecta nativo
+- Cambias assets nativos (icons, splash)
 - Primera vez que deployeas
 
 ```bash
-# Build development
+# Development
 eas build --profile development --platform android
 eas build --profile development --platform ios
 
-# Build preview
-eas build --profile preview --platform android
-eas build --profile preview --platform ios
+# Preview
+eas build --profile preview --platform all
 
-# Build production
-eas build --profile production --platform android
-eas build --profile production --platform ios
-
-# Build ambas plataformas
+# Production
 eas build --profile production --platform all
 ```
 
 ## 📱 Workflow Típico
 
-### 1. Primera vez (setup completo)
+### 1. Desarrollo diario (solo updates OTA)
 ```bash
-# Build inicial
-eas build --profile development --platform android
-
-# Instalar en tu dispositivo
-# El QR code o link te lo da EAS después del build
+# Después de cambiar código JS/TS:
+eas update --branch development --environment development --message "Added new button"
+# La app se actualiza sola al reabrirse
 ```
 
-### 2. Desarrollo diario (solo updates OTA)
+### 2. Pre-producción
 ```bash
-# Haces cambios en tu código
-# No cambias nada nativo
-
-# Publicas el update
-eas update --branch development --message "Added new button"
-
-# La app se actualiza sola al abrirse!
+eas update --branch preview --environment preview --message "New feature: dark mode"
 ```
 
-### 3. Pre-producción
+### 3. Production release
 ```bash
-# Cuando terminas features
-eas update --branch preview --message "New feature: dark mode"
-
-# QA team prueba
-# Si todo OK, pasas a production
+eas update --branch production --environment production --message "v1.1.0: New features"
 ```
 
-### 4. Production release
+### 4. Emergency rollback
 ```bash
-# Publicar a usuarios finales
-eas update --branch production --message "v1.1.0: New features and bug fixes"
-
-# Usuarios reciben el update automáticamente!
-```
-
-### 5. Emergency rollback
-```bash
-# Si algo sale mal en production
 eas update:rollback --branch production
+```
 
-# Usuarios vuelven a la versión anterior automáticamente
+## 🚀 Hermes Bytecode Diffing (SDK 55+)
+
+SDK 55 introduce **bytecode diffing**: los updates descargan ~75% más rápido al enviar solo el diff binario en lugar del bytecode completo. Es opt-in en SDK 55 y será default en SDK 56.
+
+Para activarlo:
+
+```bash
+# Activar en EAS para tu proyecto
+eas update:configure --bytecode-diffing
 ```
 
 ## 🎯 Tips
 
-### Ver información del proyecto
 ```bash
-# Ver configuración actual
+# Ver info del proyecto
 eas project:info
 
 # Ver builds
@@ -148,83 +128,28 @@ eas build:list
 eas update:list
 ```
 
-### Testing local
-```bash
-# Probar en desarrollo (Expo Go)
-npx expo start
-
-# Probar con build de desarrollo
-# Instala el .apk o .ipa del build development
-# Los updates funcionarán automáticamente
-```
-
-### Configurar variables de entorno
-```bash
-# Si necesitas env vars en tus updates
-eas update --branch production --message "Update" \
-  --env MY_VAR=value
-```
-
-## ⚡ Flujo Rápido (día a día)
-
-```bash
-# 1. Haces cambios en tu código
-# 2. Publicas:
-eas update --branch development --message "Quick fix"
-
-# 3. La app se actualiza sola en ~5 segundos al abrirse
-# ¡Listo! No más App Store/Play Store reviews
-```
-
 ## 🔧 Troubleshooting
 
-### Si el update no aparece:
 ```bash
-# Verificar que se publicó
+# Verificar que el update se publicó
 eas update:list --branch development
 
-# Verificar la configuración
+# Verificar configuración del app.json
 cat app.json | grep -A 5 "updates"
 
-# Force reload en la app
-# Cierra y abre la app de nuevo
-```
-
-### Si algo no funciona:
-```bash
-# Rollback inmediato
-eas update:rollback --branch development
-
-# Ver logs
-eas build:list
-eas update:list
-```
-
-## 📊 Monitoreo
-
-```bash
-# Ver cuántos usuarios tienen cada versión
-eas update:list --branch production
-
-# Ver estadísticas
-eas project:info
-```
-
-## 🎉 Resumen
-
-**Para desarrollo:**
-```bash
-eas update --branch development --message "Tu mensaje"
-```
-
-**Para production:**
-```bash
-eas update --branch production --message "Tu mensaje"
-```
-
-**Si algo sale mal:**
-```bash
+# Si algo sale mal en producción
 eas update:rollback --branch production
 ```
 
-¡Eso es todo! Con estos comandos tienes todo lo que necesitas para manejar updates en tu app.
+## ⚡ Resumen rápido
+
+```bash
+# Publicar a development
+eas update --branch development --environment development --message "Tu mensaje"
+
+# Publicar a production
+eas update --branch production --environment production --message "Tu mensaje"
+
+# Rollback de emergencia
+eas update:rollback --branch production
+```

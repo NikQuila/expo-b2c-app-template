@@ -10,7 +10,6 @@ import { SheetProvider } from 'react-native-actions-sheet';
 import '@/lib/sheets';
 import '@/lib/i18n';
 import { setupNotificationListeners } from '@/lib/notifications';
-import { autoUpdateOnStart } from '@/lib/updates';
 
 import { lightTheme, darkTheme, useColorScheme } from '@/lib/react-native-paper';
 
@@ -68,11 +67,6 @@ function RootLayoutNav() {
   useEffect(() => {
     const cleanup = setupNotificationListeners();
     return cleanup;
-  }, []);
-
-  // Check for updates on mount (runs automatically and silently)
-  useEffect(() => {
-    autoUpdateOnStart();
   }, []);
 
   // Configure Google Sign-In

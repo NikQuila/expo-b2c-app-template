@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { SchedulableTriggerInputTypes } from 'expo-notifications';
 
 /**
  * Send a test local notification
@@ -16,6 +17,7 @@ export async function sendTestNotification(route?: string) {
         sound: true,
       },
       trigger: {
+        type: SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds: 1,
       },
     });

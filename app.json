@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "tempexpo",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -16,7 +15,10 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification", "remote-notification"],
+        "UIBackgroundModes": [
+          "remote-notification",
+          "remote-notification"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.nikquila.templateb2c"
@@ -26,17 +28,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["POST_NOTIFICATIONS"],
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
       "googleServicesFile": "./google-services.json",
       "package": "com.nikquila.templateb2c"
-    },
-    "notification": {
-      "icon": "./assets/images/notification-icon.png",
-      "color": "#000000",
-      "androidMode": "default",
-      "androidCollapsedTitle": "New notification"
     },
     "web": {
       "bundler": "metro",
@@ -53,7 +50,18 @@
         }
       ],
       "expo-apple-authentication",
-      "expo-notifications"
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#000000",
+          "androidMode": "default",
+          "androidCollapsedTitle": "New notification"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

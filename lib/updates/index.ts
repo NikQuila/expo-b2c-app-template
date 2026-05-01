@@ -1,46 +1,16 @@
 import * as Updates from 'expo-updates';
 
-export interface UpdateInfo {
-  isUpdateAvailable: boolean;
-  isUpdatePending: boolean;
-  updateId?: string;
-  createdAt?: Date;
-  manifest?: any;
-}
-
 /**
- * Check if there's an update available
+ * Updates are applied automatically by expo-updates on app start
+ * (configured via `updates.checkAutomatically: "ON_LOAD"` in app.json).
+ *
+ * The helpers below are only needed if you want to expose a manual
+ * "Check for updates" button in the UI.
  */
-export async function checkForUpdates(): Promise<UpdateInfo> {
-  try {
-    // Only check in production builds
-    if (__DEV__) {
-      console.log('Updates disabled in development');
-      return {
-        isUpdateAvailable: false,
-        isUpdatePending: false,
-      };
-    }
-
-    const update = await Updates.checkForUpdateAsync();
-
-    return {
-      isUpdateAvailable: update.isAvailable,
-      isUpdatePending: false,
-      manifest: update.manifest,
-    };
-  } catch (error) {
-    console.error('Error checking for updates:', error);
-    return {
-      isUpdateAvailable: false,
-      isUpdatePending: false,
-    };
-  }
-}
 
 /**
- * Download and install update automatically
- * Returns true if update was downloaded and app needs reload
+ * Manually check, download and apply an update.
+ * Returns whether an update was found and applied.
  */
 export async function downloadAndApplyUpdate(): Promise<{
   success: boolean;
@@ -52,18 +22,15 @@ export async function downloadAndApplyUpdate(): Promise<{
       return { success: false, needsReload: false, error: 'Updates disabled in dev' };
     }
 
-    // Check for updates first
     const checkResult = await Updates.checkForUpdateAsync();
 
     if (!checkResult.isAvailable) {
       return { success: true, needsReload: false };
     }
 
-    // Download the update
     const fetchResult = await Updates.fetchUpdateAsync();
 
     if (fetchResult.isNew) {
-      // Update downloaded successfully, reload app
       await Updates.reloadAsync();
       return { success: true, needsReload: true };
     }
@@ -80,7 +47,30 @@ export async function downloadAndApplyUpdate(): Promise<{
 }
 
 /**
- * Get current update information
+ * Check if there's an update available without downloading it.
+ */
+export async function checkForUpdates(): Promise<{
+  isUpdateAvailable: boolean;
+  manifest?: any;
+}> {
+  try {
+    if (__DEV__) {
+      return { isUpdateAvailable: false };
+    }
+
+    const update = await Updates.checkForUpdateAsync();
+    return {
+      isUpdateAvailable: update.isAvailable,
+      manifest: update.manifest,
+    };
+  } catch (error) {
+    console.error('Error checking for updates:', error);
+    return { isUpdateAvailable: false };
+  }
+}
+
+/**
+ * Get current update info (channel, updateId, etc.) for display in Settings.
  */
 export function getCurrentUpdateInfo() {
   if (__DEV__) {
@@ -100,46 +90,4 @@ export function getCurrentUpdateInfo() {
     createdAt: Updates.createdAt,
     isEmbeddedLaunch: Updates.isEmbeddedLaunch,
   };
-}
-
-/**
- * Reload the app (use after downloading an update)
- */
-export async function reloadApp(): Promise<void> {
-  try {
-    await Updates.reloadAsync();
-  } catch (error) {
-    console.error('Error reloading app:', error);
-  }
-}
-
-/**
- * Check, download and apply update automatically on app start
- * This runs silently in the background
- */
-export async function autoUpdateOnStart(): Promise<void> {
-  try {
-    if (__DEV__) {
-      console.log('Auto-update disabled in development');
-      return;
-    }
-
-    console.log('Checking for updates...');
-    const update = await Updates.checkForUpdateAsync();
-
-    if (update.isAvailable) {
-      console.log('Update available, downloading...');
-      const fetchResult = await Updates.fetchUpdateAsync();
-
-      if (fetchResult.isNew) {
-        console.log('Update downloaded, reloading app...');
-        await Updates.reloadAsync();
-      }
-    } else {
-      console.log('App is up to date');
-    }
-  } catch (error) {
-    console.error('Auto-update error:', error);
-    // Fail silently, don't disrupt user experience
-  }
 }
