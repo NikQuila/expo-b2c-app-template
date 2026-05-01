@@ -82,7 +82,37 @@ A production-ready React Native mobile application built with Expo, featuring au
 
 5. **Configure social sign-in (optional)**
 
-   Update the Google Sign-In client ID in `app.json` (line 53)
+   ### Google Sign-In
+
+   1. Create a Firebase project for your app
+   2. Add iOS and Android apps in Firebase using your bundle ID / package name
+   3. Enable Google as a provider in Firebase Authentication → Sign-in method
+   4. Download the resulting `GoogleService-Info.plist` (iOS) and `google-services.json` (Android) and place them at the project root
+   5. Reference both files in `app.json`:
+      - `ios.googleServicesFile: "./GoogleService-Info.plist"`
+      - `android.googleServicesFile: "./google-services.json"`
+   6. Update `app.json` plugin config for `@react-native-google-signin/google-signin` with the iOS REVERSED_CLIENT_ID as `iosUrlScheme`
+   7. Update `app/_layout.tsx` `GoogleSignin.configure({ webClientId, iosClientId })` with the IDs from your Firebase project
+   8. In Supabase Dashboard → Authentication → Providers → Google: enable, paste **all three** client IDs (Web, iOS, Android) comma-separated in "Client IDs", and turn ON **Skip nonce checks**
+   9. For Android OAuth client to be created, after the first `eas build --platform android` run `eas credentials` to view the upload key SHA-1 and add it to Firebase → re-download `google-services.json`
+   10. **After the first Play Store upload**, also add the Play App Signing SHA-1 (from Play Console → App integrity) to Firebase, otherwise Google Sign-In breaks for users downloading from the store
+
+   ### Apple Sign-In (iOS only)
+
+   Requires a paid Apple Developer account.
+
+   1. The `expo-apple-authentication` plugin is already in `app.json` — it adds the entitlement at build time
+   2. After the first `eas build --platform ios`, EAS auto-creates the App ID and enables the Sign In with Apple capability. Verify in https://developer.apple.com/account/resources/identifiers/list that your App ID has Sign In with Apple checked **and** is set as a "Primary App ID"
+   3. **Critical step (often missed):** create a separate **Services ID** at https://developer.apple.com/account/resources/identifiers/list (filter by "Services IDs" → click `+`):
+      - Identifier: `<your-bundle-id>.signin` (e.g. `dev.nutria.pluma.signin`)
+      - Description: `<App> Signin`
+      - On the Services ID's edit page: enable **Sign In with Apple**, click "Configure", and link it to your primary App ID
+      - Save → Continue → Register
+   4. In Supabase Dashboard → Authentication → Providers → Apple: enable, and in "Client IDs" paste both identifiers comma-separated:
+      ```
+      <bundle-id>.signin,<bundle-id>
+      ```
+   5. Without step 3+4 Apple's auth backend rejects the sign-in with "Sign-Up Not Completed" / "Registro no completado" in the system dialog after Face ID, even though the App ID alone shows the capability as enabled. The official docs say only the App ID is needed — empirically this is not enough for new App IDs.
 
 ## Development
 
